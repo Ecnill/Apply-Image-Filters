@@ -16,18 +16,16 @@ Height = 600
 
 
 class MandelbrotGUI(QMainWindow):
-
     def __init__(self):
         super().__init__()
         self.m = MandelbrotCalculation()
         self.init_ui()
 
     def init_ui(self):
-
         p = self.palette()
         p.setColor(self.backgroundRole(), Qt.black)
         self.setPalette(p)
-        self.resize(Width, Width)
+        self.resize(Width, Height)
         self.center()
         self.setWindowTitle('Mandelbrot set')
         self.statusBar().setStyleSheet("QStatusBar{padding-left:8px;background:black;color:white;font-weight:bold;}")
@@ -51,10 +49,10 @@ class MandelbrotGUI(QMainWindow):
             self.m.offset_x -= self.m.crop / 1.5
             print('LEFT')
         elif key == Qt.Key_Down:
-            self.m.offset_y -= self.m.crop / 1.5
+            self.m.offset_y += self.m.crop / 1.5
             print('DOWN')
         elif key == Qt.Key_Up:
-            self.m.offset_y += self.m.crop / 1.5
+            self.m.offset_y -= self.m.crop / 1.5
             print('UP')
         self.update()
 
@@ -101,7 +99,7 @@ class MandelbrotCalculation:
                 z = 0
                 i = 0
                 while i < de:
-                    z = z * z + c
+                    z = z ** 2 + c
                     if abs(z) >= 2:
                         break
                     i += 1
@@ -115,6 +113,7 @@ class MandelbrotCalculation:
                     b = int(b) % 255
                     self.colors.append((r, g, b))
                     self.coords.append((x, y))
+        print('Done.')
 
 
 if __name__ == '__main__':
