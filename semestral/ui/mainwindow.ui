@@ -92,14 +92,12 @@ padding: 10px;</string>
     </property>
     <widget class="QMenu" name="menuFilters">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="title">
       <string>&amp;Filters</string>
      </property>
-     <addaction name="actionFilter_1"/>
-     <addaction name="actionFilter_4"/>
-     <addaction name="actionFilter_5"/>
+     <addaction name="actionNoise"/>
     </widget>
     <widget class="QMenu" name="menuBrightness">
      <property name="title">
@@ -108,7 +106,6 @@ padding: 10px;</string>
      <addaction name="actionBrightnessMore"/>
      <addaction name="actionBrightnessLess"/>
     </widget>
-    <addaction name="actionNoise"/>
     <addaction name="menuBrightness"/>
     <addaction name="menuFilters"/>
     <addaction name="separator"/>
@@ -126,7 +123,7 @@ padding: 10px;</string>
     </property>
     <addaction name="actionInvert"/>
     <addaction name="actionBlackWhite"/>
-    <addaction name="actionGrayscale"/>
+    <addaction name="actionGrayScale"/>
     <addaction name="actionSepia"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
@@ -144,10 +141,24 @@ padding: 10px;</string>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <widget class="QMenu" name="menuZoom">
+     <property name="title">
+      <string>&amp;Zoom</string>
+     </property>
+     <addaction name="actionZoomIn"/>
+     <addaction name="actionZoomOut"/>
+    </widget>
+    <addaction name="menuZoom"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuImage"/>
    <addaction name="menuColors"/>
+   <addaction name="menuTools"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -172,7 +183,7 @@ padding: 10px;</string>
     <string>&amp;Invert</string>
    </property>
   </action>
-  <action name="actionGrayscale">
+  <action name="actionGrayScale">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -307,24 +318,23 @@ padding: 10px;</string>
     <string>&amp;Less</string>
    </property>
   </action>
+  <action name="actionZoomIn">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Zoom In</string>
+   </property>
+  </action>
+  <action name="actionZoomOut">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Zoom &amp;Out</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>actionQuit</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
