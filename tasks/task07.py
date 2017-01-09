@@ -39,7 +39,7 @@ sharpen_three = SharpenFilter('sharpen_three', [
 
 def sharpen(filename, filter_sharpen, result_name, factor=1.0, bias=0.0):
     base_filename = os.path.basename(filename)
-    if 'image' not in mimetypes.guess_type(FILENAME)[0] or not os.path.exists(filename):
+    if 'image' not in mimetypes.guess_type(filename)[0] or not os.path.exists(filename):
         raise FileNotFoundError(base_filename)
 
     image = Image.open(filename)
