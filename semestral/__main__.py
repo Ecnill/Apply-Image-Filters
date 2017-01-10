@@ -1,4 +1,4 @@
-from gui import main, delete_tmp_files
+from gui import main
 
 main()
-delete_tmp_files()
+
