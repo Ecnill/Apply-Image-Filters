@@ -1,171 +1,146 @@
 import os.path
-import random
 import tempfile
-import shutil
-
-from collections import namedtuple
+import numpy as np
 from PIL import Image, ImageDraw
+from math import floor
 
-IMAGE_TMP_PATHS = []
+import filters
 
-ImageData = namedtuple('ImageData', ['width', 'height', 'pixels'])
-
-IMAGE = ImageData(0, 0, [])
-
-
-class TempFiles(object):
-    def __init__(self, steps):
-        self.TMP_FILES = []
-        self.steps = steps
-        self.temp_dir = ''
-
-    def get_tmp_files(self):
-        self.temp_dir = tempfile.mkdtemp()
-        for i in range(self.steps):
-            pre = 'tmp_{}'.format(i)
-            temp = tempfile.NamedTemporaryFile(suffix='.jpg', prefix=pre, dir=self.temp_dir)
-            self.TMP_FILES.append(temp)
-        global IMAGE_TMP_PATHS
-        IMAGE_TMP_PATHS = self.TMP_FILES
-        return self.TMP_FILES
-
-    def remove_tmp_dir(self):
-        for path in self.TMP_FILES:
-            path.close()
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
+IMAGE_PATH = ''
+TEMP_FILE_PATH = ''
 
 
-def set_image_data(path):
+class TempFile:
+    def __init__(self):
+        self.temp_path = ''
+
+    def create_temp_file(self):
+        self.file = tempfile.NamedTemporaryFile()
+        self.temp_path = os.path.abspath(self.file.name)
+
+    def close_temp_file(self):
+        self.file.close()
+        if os.path.exists(self.temp_path):
+            os.remove(self.temp_path)
+
+
+def send_image_from_gui(path, temp_file):
+    global IMAGE_PATH, TEMP_FILE_PATH
+    IMAGE_PATH = path
+    TEMP_FILE_PATH = temp_file
+
+
+def get_image_data(path):
     image = Image.open(path)
-    width = image.size[0]
-    height = image.size[1]
-    pixels = image.load()
-    global IMAGE
-    IMAGE = ImageData(width, height, pixels)
-
-
-def save_image_to_tmp_file():
-    pass
-
-
-def set_rgb_diapason(r, g, b):
-    r = min(max(r, 0), 255)
-    g = min(max(g, 0), 255)
-    b = min(max(b, 0), 255)
-    return r, g, b
+    w, h = image.size[0], image.size[1]
+    return w, h, np.array(image)
 
 
 def get_image_size():
-    w = IMAGE.width
-    h = IMAGE.height
+    w, h, _ = get_image_data(IMAGE_PATH)
     return w, h
 
 
-def prepare_new_file():
-    new_image = Image.new('RGB', [IMAGE.width, IMAGE.height], (255, 255, 255))
-    draw = ImageDraw.Draw(new_image)
-    return new_image, draw
-
-
 def color_invert():
-    new_image, draw = prepare_new_file()
-    for i in range(IMAGE.width):
-        for j in range(IMAGE.height):
-            a = IMAGE.pixels[i, j][0]
-            b = IMAGE.pixels[i, j][1]
-            c = IMAGE.pixels[i, j][2]
-            draw.point((i, j), (255 - a, 255 - b, 255 - c))
-    tmp_path = IMAGE_TMP_PATHS[0]
-    new_image.save(tmp_path, 'JPEG')
-    tmp_path.seek(0)
-    del draw
-    return os.path.abspath(tmp_path.name)
+    global IMAGE_PATH
+    _, _, pix = get_image_data(IMAGE_PATH)
+    r, g, b = pix[:, :, 0], pix[:, :, 1], pix[:, :, 2]
+    pix[:, :, 0] = 255 - r
+    pix[:, :, 1] = 255 - g
+    pix[:, :, 2] = 255 - b
+    IMAGE_PATH = TEMP_FILE_PATH
+    Image.fromarray(pix).save(TEMP_FILE_PATH, 'JPEG')
 
 
 def gray_scale():
-    new_image, draw = prepare_new_file()
-    for i in range(IMAGE.width):
-        for j in range(IMAGE.height):
-            a = IMAGE.pixels[i, j][0]
-            b = IMAGE.pixels[i, j][1]
-            c = IMAGE.pixels[i, j][2]
-            mid = (a + b + c) // 3
-            draw.point((i, j), (mid, mid, mid))
-    tmp_path = IMAGE_TMP_PATHS[0]
-    new_image.save(tmp_path, 'JPEG')
-    tmp_path.seek(0)
-    del draw
-    return os.path.abspath(tmp_path.name)
-
-
-def black_white():
-    new_image, draw = prepare_new_file()
-    factor = 100
-    for i in range(IMAGE.width):
-        for j in range(IMAGE.height):
-            a = IMAGE.pixels[i, j][0]
-            b = IMAGE.pixels[i, j][1]
-            c = IMAGE.pixels[i, j][2]
-            sum_rgb = a + b + c
-            if sum_rgb > (((255 + factor) // 2) * 3):
-                a, b, c = 255, 255, 255
-            else:
-                a, b, c = 0, 0, 0
-            draw.point((i, j), (a, b, c))
-    tmp_path = IMAGE_TMP_PATHS[0]
-    new_image.save(tmp_path, 'JPEG')
-    tmp_path.seek(0)
-    del draw
-    return os.path.abspath(tmp_path.name)
+    """  Ways for converting colors to grayscale:
+        Average method: (R + G + B) / 3
+        Lightness method: (max(R, G, B) + min(R, G, B)) / 2
+        Luminosity method: 0.21 R + 0.72 G + 0.07 B """
+    global IMAGE_PATH
+    _, _, p = get_image_data(IMAGE_PATH)
+    pix = np.copy(p).astype(int)
+    r, g, b = pix[:, :, 0], pix[:, :, 1], pix[:, :, 2]
+    m = 0.21 * r + 0.72 * g + 0.07 * b
+    pix[:, :, 0], pix[:, :, 1], pix[:, :, 2] = m, m, m
+    pix = np.clip(pix[:, :, :], 0, 255)
+    IMAGE_PATH = TEMP_FILE_PATH
+    Image.fromarray(pix.astype('uint8')).save(TEMP_FILE_PATH, 'JPEG')
 
 
 def sepia():
-    new_image, draw = prepare_new_file()
+    global IMAGE_PATH
+    _, _, p = get_image_data(IMAGE_PATH)
+    pix = np.copy(p).astype(int)
     depth = 50
-    for i in range(IMAGE.width):
-        for j in range(IMAGE.height):
-            r = IMAGE.pixels[i, j][0]
-            g = IMAGE.pixels[i, j][1]
-            b = IMAGE.pixels[i, j][2]
-            mid = (r + g + b) // 3
-            r = mid + depth * 2
-            g = mid + depth
-            b = mid
-            r, g, b = set_rgb_diapason(r, g, b)
-            draw.point((i, j), (r, g, b))
-    tmp_path = IMAGE_TMP_PATHS[0]
-    new_image.save(tmp_path, 'JPEG')
-    del draw
-    return os.path.abspath(tmp_path.name)
+    r, g, b = pix[:, :, 0], pix[:, :, 1], pix[:, :, 2]
+    mid = (r + g + b) // 3
+    r, g, b = mid + depth * 2, mid + depth, mid
+    pix[:, :, 0], pix[:, :, 1] , pix[:, :, 1] = r, g, b
+    pix = np.clip(pix[:, :, :], 0, 255)
+    IMAGE_PATH = TEMP_FILE_PATH
+    Image.fromarray(pix.astype('uint8')).save(TEMP_FILE_PATH, 'JPEG')
 
 
 def noise():
-    new_image, draw = prepare_new_file()
+    global IMAGE_PATH
     factor = 100
-    for i in range(IMAGE.width):
-        for j in range(IMAGE.height):
-            rand = random.randint(-factor, factor)
-            r = IMAGE.pixels[i, j][0] + rand
-            g = IMAGE.pixels[i, j][1] + rand
-            b = IMAGE.pixels[i, j][2] + rand
-            r, g, b = set_rgb_diapason(r, g, b)
-            draw.point((i, j), (r, g, b))
-    tmp_path = IMAGE_TMP_PATHS[0]
-    new_image.save(tmp_path, 'JPEG')
-    del draw
-    return os.path.abspath(tmp_path.name)
+    w, h, p = get_image_data(IMAGE_PATH)
+    pix = np.copy(p).astype(int)
+    r, g, b = pix[:, :, 0], pix[:, :, 1], pix[:, :, 2]
+    rand = np.random.randint(-factor, factor, r.size).reshape(h, w)
+    r, g, b = r + rand,  g + rand, b + rand
+    pix[:, :, 0], pix[:, :, 1], pix[:, :, 2] = r, g, b
+    pix = np.clip(pix[:, :, :], 0, 255)
+    IMAGE_PATH = TEMP_FILE_PATH
+    Image.fromarray(pix.astype('uint8')).save(TEMP_FILE_PATH, 'JPEG')
 
 
 def brightness(factor):
-    new_image, draw = prepare_new_file()
-    for i in range(IMAGE.width):
-        for j in range(IMAGE.height):
-            r = IMAGE.pixels[i, j][0] + factor
-            g = IMAGE.pixels[i, j][1] + factor
-            b = IMAGE.pixels[i, j][2] + factor
-            r, g, b = set_rgb_diapason(r, g, b)
-            draw.point((i, j), (r, g, b))
-    tmp_path = IMAGE_TMP_PATHS[0]
-    new_image.save(tmp_path, 'JPEG')
+    global IMAGE_PATH
+    w, h, p = get_image_data(IMAGE_PATH)
+    pix = np.copy(p).astype(int)
+    pix += factor
+    pix = np.clip(pix[:, :, :], 0, 255)
+    IMAGE_PATH = TEMP_FILE_PATH
+    Image.fromarray(pix.astype('uint8')).save(TEMP_FILE_PATH, 'JPEG')
+
+
+def blur():
+    return apply_filter(filters.filter_blur)
+
+
+def sharpen():
+    return apply_filter(filters.filter_sharpen)
+
+
+def apply_filter(filter_matrix):
+    global IMAGE_PATH
+    image = Image.open(IMAGE_PATH)
+    w, h, p = image.size[0], image.size[1], image.load()
+    new_image = Image.new('RGB', [w, h], (255, 255, 255))
+    draw = ImageDraw.Draw(new_image)
+    for x in range(w):
+        for y in range(h):
+            r, g, b = 0.0, 0.0, 0.0
+
+            for fy in range(len(filter_matrix.filter)):
+                for fx in range(len(filter_matrix.filter[0])):
+
+                    im_x = (x - len(filter_matrix.filter[0]) / 2 + fx + w) % w
+                    im_y = (y - len(filter_matrix.filter) / 2 + fy + h) % h
+
+                    r += p[im_x, im_y][0] * filter_matrix.filter[fy][fx]
+                    g += p[im_x, im_y][1] * filter_matrix.filter[fy][fx]
+                    b += p[im_x, im_y][2] * filter_matrix.filter[fy][fx]
+
+            r = min(max(int(filter_matrix.factor * r + filter_matrix.bias), 0), 255)
+            g = min(max(int(filter_matrix.factor * g + filter_matrix.bias), 0), 255)
+            b = min(max(int(filter_matrix.factor * b + filter_matrix.bias), 0), 255)
+            draw.point((x, y), (r, g, b))
+            print('Applying filter {}... '.format(filter_matrix.name)
+                  + str(floor((x * h + y) / (w * h) * 100)) + '%  ', end='\r')
+
+    new_image.save(TEMP_FILE_PATH, 'JPEG')
+    IMAGE_PATH = TEMP_FILE_PATH
     del draw
-    return os.path.abspath(tmp_path.name)

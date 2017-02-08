@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>tau.png</normaloff>tau.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
@@ -64,6 +68,7 @@ padding: 10px;</string>
     </item>
    </layout>
   </widget>
+  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -98,6 +103,8 @@ padding: 10px;</string>
       <string>&amp;Filters</string>
      </property>
      <addaction name="actionNoise"/>
+     <addaction name="actionBlur"/>
+     <addaction name="actionSharpen"/>
     </widget>
     <widget class="QMenu" name="menuBrightness">
      <property name="title">
@@ -122,24 +129,8 @@ padding: 10px;</string>
      <bool>false</bool>
     </property>
     <addaction name="actionInvert"/>
-    <addaction name="actionBlackWhite"/>
     <addaction name="actionGrayScale"/>
     <addaction name="actionSepia"/>
-   </widget>
-   <widget class="QMenu" name="menuAbout">
-    <property name="title">
-     <string>Abo&amp;ut</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="title">
-     <string>E&amp;dit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -155,13 +146,10 @@ padding: 10px;</string>
     <addaction name="menuZoom"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuImage"/>
    <addaction name="menuColors"/>
    <addaction name="menuTools"/>
-   <addaction name="menuAbout"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
    <property name="enabled">
     <bool>true</bool>
@@ -169,10 +157,19 @@ padding: 10px;</string>
    <property name="text">
     <string>&amp;Open</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="actionQuit">
    <property name="text">
     <string>&amp;Quit</string>
+   </property>
+   <property name="statusTip">
+    <string>Leave the program</string>
+   </property>
+   <property name="shortcut">
+    <string>Esc</string>
    </property>
   </action>
   <action name="actionInvert">
@@ -218,6 +215,9 @@ padding: 10px;</string>
    </property>
    <property name="text">
     <string>&amp;Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionFilter_2">
@@ -325,6 +325,9 @@ padding: 10px;</string>
    <property name="text">
     <string>&amp;Zoom In</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl++</string>
+   </property>
   </action>
   <action name="actionZoomOut">
    <property name="enabled">
@@ -332,6 +335,25 @@ padding: 10px;</string>
    </property>
    <property name="text">
     <string>Zoom &amp;Out</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+-</string>
+   </property>
+  </action>
+  <action name="actionBlur">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Blur</string>
+   </property>
+  </action>
+  <action name="actionSharpen">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Sharpen</string>
    </property>
   </action>
  </widget>
