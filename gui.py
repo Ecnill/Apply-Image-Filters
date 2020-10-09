@@ -63,7 +63,7 @@ class Gui(object):
             uic.loadUi(f, self.win)
         self.filename = '-'
         self.home_dir = ''
-        self.last_dir = os.path.curdir + '/examples'
+        self.last_dir = os.path.curdir + '/img'
         self.tmp_path = ''
         self.scroll_area = self.win.findChild(QtWidgets.QScrollArea, 'scrollArea')
         self.init_ui()
