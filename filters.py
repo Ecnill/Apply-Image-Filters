@@ -1,3 +1,4 @@
+""" The different types of matrices used for different image filters. """
 from collections import namedtuple
 
 Filter = namedtuple('SharpenFilter', ['name', 'factor', 'bias', 'filter'])

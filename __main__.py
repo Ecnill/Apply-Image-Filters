@@ -1,4 +1,4 @@
-from gui import main
+""" The entry point. """
+from gui import run_gui
 
-main()
-
+run_gui()

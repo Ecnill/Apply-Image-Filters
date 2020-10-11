@@ -1,3 +1,4 @@
+""" The UI module provided by QT. Creates the Window for the interaction with users. """
 import os
 import shutil
 
@@ -5,14 +6,14 @@ from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QDesktopWidget
 
-from image_operations import color_invert, gray_scale, send_image_from_gui, brightness, sepia, noise, \
-     blur, sharpen, get_image_size, TempFile
-
+from image_operations import color_invert, gray_scale, setup_image_paths, brightness, sepia, \
+    noise, blur, sharpen, get_image_size, TempFile
 
 TEMP_FILE_PATH = TempFile()
 
 
 class ImageViewer(QtWidgets.QLabel):
+    """ The main frame located in the Window and containing the image. """
     def __init__(self, path, tmp_path):
         super().__init__()
         self.path = path
@@ -22,29 +23,39 @@ class ImageViewer(QtWidgets.QLabel):
         self.scale_factor = 2.0
 
     def update(self, path=''):
+        """ Updates the shown image. """
         pix_map = QPixmap(path)
         self.setPixmap(pix_map)
 
     def scale_image(self, factor):
+        """ Scales the shown image. """
         self.scale_factor *= factor
-        w = self.scale_factor * self.width()
-        h = self.scale_factor * self.height()
+        width = self.scale_factor * self.width()
+        height = self.scale_factor * self.height()
         if self.tmp_path != '':
             path = self.tmp_path
         else:
             path = self.path
         pix_max = QPixmap(path)
-        self.setPixmap(pix_max.scaled(w, h, QtCore.Qt.KeepAspectRatio))
+        self.setPixmap(pix_max.scaled(width, height, QtCore.Qt.KeepAspectRatio))
 
 
 class Window(QtWidgets.QMainWindow):
+    """ The main Window. """
+
     def get_close_dialog_answer(self):
-        result = QtWidgets.QMessageBox.question(self, 'Confirm Exit...', 'Your image is not saved, '
-                                                                         'are you sure you want to exit?',
-                                                QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        """ Gets the user Yes/No answer for the dialog closing. """
+        result = QtWidgets.QMessageBox.question(
+            self,
+            'Confirm Exit...',
+            'Your image is not saved, '
+            'are you sure you want to exit?',
+            QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
+        )
         return result == QtWidgets.QMessageBox.Yes
 
     def closeEvent(self, event):
+        """ Closes the window. """
         if '*' in self.windowTitle():
             result = self.get_close_dialog_answer()
             if result:
@@ -55,12 +66,15 @@ class Window(QtWidgets.QMainWindow):
             event.accept()
 
 
-class Gui(object):
+class Gui:
+    """ The GUI entry point. """
+    # pylint: disable=too-many-instance-attributes, missing-function-docstring
+    # Many arguments are reasonable here. TODO: add docstring for all methods of the class.
     def __init__(self):
         self.app = QtWidgets.QApplication([])
         self.win = Window()
-        with open('ui/mainwindow.ui') as f:
-            uic.loadUi(f, self.win)
+        with open('ui/mainwindow.ui') as file:
+            uic.loadUi(file, self.win)
         self.filename = '-'
         self.home_dir = ''
         self.last_dir = os.path.curdir + '/img'
@@ -110,6 +124,8 @@ class Gui(object):
         return self.app.exec_()
 
     def _update_title(self, changed=''):
+        # pylint: disable=attribute-defined-outside-init
+        # the title can be changes on the runtime.
         self.title = 'Graphics editor - {}'.format(self.filename + ' ' + changed)
         self.win.setWindowTitle(self.title)
 
@@ -125,12 +141,14 @@ class Gui(object):
             self.win.close()
 
     def _open(self):
+        # pylint: disable=attribute-defined-outside-init
+        # the label can be changes on the runtime.
         path, _ = QtWidgets.QFileDialog.getOpenFileName(self.win, 'Open File', self.last_dir)
         if not path:
             return
         self.last_dir = os.path.dirname(path)
         self.home_dir = self.last_dir
-        send_image_from_gui(path, TEMP_FILE_PATH.temp_path)  # connection with image_operations
+        setup_image_paths(path, TEMP_FILE_PATH.temp_path)  # connection with image_operations
         self.tmp_path = TEMP_FILE_PATH.temp_path
         self.label = ImageViewer(path, self.tmp_path)
         self.label.scale_factor = 1.0
@@ -142,7 +160,8 @@ class Gui(object):
     def _save_as(self, path):
         if not path:
             path = self.last_dir
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(self.win, 'Save image', path, 'Image files (*.jpg *.png)')
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self.win, 'Save image', path,
+                                                        'Image files (*.jpg *.png)')
         if not path:
             return
         path += os.path.splitext(self.tmp_path)[1]
@@ -156,10 +175,11 @@ class Gui(object):
         self._update_title()
 
     def image_properties(self):
-        w, h = get_image_size()
+        width, height = get_image_size()
         full_path = os.path.join(self.home_dir, self.filename)
         info = 'Size in pixels: %d x %d \n\nNumber of pixels: %d\n\nFilepath: %s\n\nFile size: %s' \
-               % (w, h, w * h, full_path, self.convert_file_size(os.path.getsize(self.tmp_path)))
+               % (width, height, width * height, full_path,
+                  self.convert_file_size(os.path.getsize(self.tmp_path)))
         QtWidgets.QMessageBox.information(self.win, self.filename, info, QtWidgets.QMessageBox.Ok)
 
     def image_action(self, operation, *args):
@@ -218,15 +238,17 @@ class Gui(object):
         while size_in_bytes >= 1024 and i < len(suffixes) - 1:
             size_in_bytes /= 1024.
             i += 1
-        f = ('%.2f' % size_in_bytes).rstrip('0').rstrip('.')
-        return '%s %s' % (f, suffixes[i])
+        file = ('%.2f' % size_in_bytes).rstrip('0').rstrip('.')
+        return '%s %s' % (file, suffixes[i])
 
     @staticmethod
     def adjust_scroll_bar(scroll_bar, factor):
-        scroll_bar.setValue(int(factor * scroll_bar.value() + ((factor - 1) * scroll_bar.pageStep() / 2)))
+        scroll_bar.setValue(
+            int(factor * scroll_bar.value() + ((factor - 1) * scroll_bar.pageStep() / 2)))
 
 
-def main():
+def run_gui():
+    """ Runs the GUI. """
     try:
         TEMP_FILE_PATH.create_temp_file()
         gui = Gui()
